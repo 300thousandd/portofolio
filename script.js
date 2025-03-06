@@ -58,8 +58,10 @@ document.addEventListener("DOMContentLoaded", async function() {
     function create3DScene() {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        const canvas = document.getElementById("threeD-canvas");
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        renderer.setSize(window.innerWidth, window.innerHeight / 2);
         document.body.appendChild(renderer.domElement);
 
         // Car body
@@ -85,15 +87,15 @@ document.addEventListener("DOMContentLoaded", async function() {
         });
 
         // Lights
-        const light = new THREE.DirectionalLight(0xffffff, 1);
+        const light = new THREE.DirectionalLight(0xffffff, 2);
         light.position.set(5, 5, 5);
         scene.add(light);
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0x606060);
         scene.add(ambientLight);
 
         // Controls
         const controls = new OrbitControls(camera, renderer.domElement);
-        camera.position.set(0, 5, 10);
+        camera.position.set(0, 3, 10);
         controls.update();
 
         // Animation loop
@@ -105,7 +107,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
         // Handle window resize
         window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(window.innerWidth, window.innerHeight / 2);
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
         });
