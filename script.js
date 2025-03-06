@@ -74,35 +74,42 @@ document.addEventListener("DOMContentLoaded", async function() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     
-    // --- Crearea unei mașini simple folosind geometrii de bază ---
-    // Corpul mașinii (un cub mare)
+    // --- Crearea unei mașini simple cu geometrie mai bună ---
+    // Corpul mașinii (partea principală a vehiculului)
     const carBodyGeometry = new THREE.BoxGeometry(2, 0.5, 1);
-    const carBodyMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+    const carBodyMaterial = new THREE.MeshStandardMaterial({ color: 0x1E90FF });
     const carBody = new THREE.Mesh(carBodyGeometry, carBodyMaterial);
-    carBody.position.y = 0.25; // Asigură-te că este plasat corect pe axa Y
+    carBody.position.y = 0.25;
     scene.add(carBody);
+
+    // ** Partea de acoperiș a mașinii (cabina)**
+    const roofGeometry = new THREE.BoxGeometry(1.2, 0.3, 0.8);
+    const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x00BFFF });
+    const carRoof = new THREE.Mesh(roofGeometry, roofMaterial);
+    carRoof.position.set(0, 0.65, 0); // Poziționare deasupra caroseriei
+    scene.add(carRoof);
 
     // Roțile mașinii (cilindri)
     const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 32);
     const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
     
     const wheel1 = new THREE.Mesh(wheelGeometry, wheelMaterial);
-    wheel1.position.set(-0.8, 0.15, 0.4); // Roata din față stânga
-    wheel1.rotation.z = Math.PI / 2; // Rotește roata pentru a fi pe orizontală
+    wheel1.position.set(-0.8, 0.1, 0.4); // Roata din față stânga
+    wheel1.rotation.z = Math.PI / 2;
     scene.add(wheel1);
 
     const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial);
-    wheel2.position.set(0.8, 0.15, 0.4); // Roata din față dreapta
+    wheel2.position.set(0.8, 0.1, 0.4); // Roata din față dreapta
     wheel2.rotation.z = Math.PI / 2;
     scene.add(wheel2);
 
     const wheel3 = new THREE.Mesh(wheelGeometry, wheelMaterial);
-    wheel3.position.set(-0.8, 0.15, -0.4); // Roata din spate stânga
+    wheel3.position.set(-0.8, 0.1, -0.4); // Roata din spate stânga
     wheel3.rotation.z = Math.PI / 2;
     scene.add(wheel3);
 
     const wheel4 = new THREE.Mesh(wheelGeometry, wheelMaterial);
-    wheel4.position.set(0.8, 0.15, -0.4); // Roata din spate dreapta
+    wheel4.position.set(0.8, 0.1, -0.4); // Roata din spate dreapta
     wheel4.rotation.z = Math.PI / 2;
     scene.add(wheel4);
 
@@ -188,43 +195,4 @@ document.addEventListener("DOMContentLoaded", async function() {
         blending: THREE.AdditiveBlending
       });
       const particleSystem = new THREE.Points(particlesGeom, particlesMat);
-      scene.add(particleSystem);
-      
-      const nebulaStart = Date.now();
-      function animateNebula() {
-        const elapsed = (Date.now() - nebulaStart) / 1000;
-        if (elapsed < 3) {
-          particlesMat.opacity = 1 - (elapsed / 3);
-          requestAnimationFrame(animateNebula);
-        } else {
-          scene.remove(particleSystem);
-        }
-      }
-      animateNebula();
-    }
-    
-    // Funcție pentru explozia mașinii
-    function explodeCar() {
-      // Aceasta ar putea include fragmentarea mașinii în bucăți și animarea exploziei
-      // Detaliile depind de complexitatea pe care o dorești pentru acest efect
-    }
-    
-    function animate() {
-      requestAnimationFrame(animate);
-      carBody.rotation.y += 0.005;  // Rotește mașina pentru efect vizual
-      renderer.render(scene, camera);
-    }
-    animate();
-    
-    // Resize listener: actualizează renderer și camera
-    window.addEventListener("resize", () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight / 2;
-      renderer.setSize(width, height);
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-    });
-  }
-  
-  create3DScene();
-});
+     
