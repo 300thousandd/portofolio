@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 
     function explodeCar() {
-      // Implementation for car explosion (not updated here, but you can adjust as needed)
+      // Implement explosion if needed
     }
 
     let carMoveSpeed = 0.05;  // Speed at which the car moves
@@ -203,15 +203,19 @@ document.addEventListener("DOMContentLoaded", async function() {
     function animate() {
       requestAnimationFrame(animate);
       
-      // Car movement and wheel rotation
+      // Move the car
       carBody.position.x += carMoveSpeed;
-      wheel1.rotation.x += 0.1;  // Rotate the wheel with car movement
-      wheel2.rotation.x += 0.1;
-      wheel3.rotation.x += 0.1;
-      wheel4.rotation.x += 0.1;
       
+      // Rotate the wheels based on car movement
+      const wheelRotationSpeed = carMoveSpeed / 0.6;  // Adjust based on the car's speed and wheel size
+      wheel1.rotation.x += wheelRotationSpeed;
+      wheel2.rotation.x += wheelRotationSpeed;
+      wheel3.rotation.x += wheelRotationSpeed;
+      wheel4.rotation.x += wheelRotationSpeed;
+
+      // Reset car position when it goes off-screen
       if (carBody.position.x > 5) {
-        carBody.position.x = -5; // Reset car position when it goes off-screen
+        carBody.position.x = -5;
       }
 
       renderer.render(scene, camera);
