@@ -74,17 +74,43 @@ document.addEventListener("DOMContentLoaded", async function() {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     
-    // Creează o piramidă hexagonală mov cu bază mai mare (raza 2)
-    const geometry = new THREE.CylinderGeometry(0, 2, 2, 6);
-    const material = new THREE.MeshStandardMaterial({ color: 0x800080, flatShading: true });
-    const pyramid = new THREE.Mesh(geometry, material);
-    scene.add(pyramid);
+    // --- Crearea unei mașini simple folosind geometrii de bază ---
+    // Corpul mașinii (un cub mare)
+    const carBodyGeometry = new THREE.BoxGeometry(2, 0.5, 1);
+    const carBodyMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+    const carBody = new THREE.Mesh(carBodyGeometry, carBodyMaterial);
+    carBody.position.y = 0.25; // Asigură-te că este plasat corect pe axa Y
+    scene.add(carBody);
+
+    // Roțile mașinii (cilindri)
+    const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 32);
+    const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
     
+    const wheel1 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheel1.position.set(-0.8, 0.15, 0.4); // Roata din față stânga
+    wheel1.rotation.z = Math.PI / 2; // Rotește roata pentru a fi pe orizontală
+    scene.add(wheel1);
+
+    const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheel2.position.set(0.8, 0.15, 0.4); // Roata din față dreapta
+    wheel2.rotation.z = Math.PI / 2;
+    scene.add(wheel2);
+
+    const wheel3 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheel3.position.set(-0.8, 0.15, -0.4); // Roata din spate stânga
+    wheel3.rotation.z = Math.PI / 2;
+    scene.add(wheel3);
+
+    const wheel4 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheel4.position.set(0.8, 0.15, -0.4); // Roata din spate dreapta
+    wheel4.rotation.z = Math.PI / 2;
+    scene.add(wheel4);
+
     // Grup pentru "crack"-uri
     const cracksGroup = new THREE.Group();
-    pyramid.add(cracksGroup);
+    carBody.add(cracksGroup);
     
-    let pyramidDamageClicks = 0;
+    let carDamageClicks = 0;
     const damageThreshold = 5;
     let exploding = false;
     
@@ -100,15 +126,15 @@ document.addEventListener("DOMContentLoaded", async function() {
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(pyramid);
+      const intersects = raycaster.intersectObject(carBody);
       
       if (intersects.length > 0 && !exploding) {
-        // Clic pe piramidă: adaugă crack și crește damage-ul
-        pyramidDamageClicks++;
+        // Clic pe mașină: adaugă crack și crește damage-ul
+        carDamageClicks++;
         addCrack();
-        if (pyramidDamageClicks >= damageThreshold) {
+        if (carDamageClicks >= damageThreshold) {
           exploding = true;
-          explodePyramid();
+          explodeCar();
         }
       } else if (intersects.length === 0) {
         createNebulaExplosion(mouse);
@@ -124,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async function() {
       event.preventDefault();
     });
     
-    // Funcție pentru a adăuga un crack pe piramidă
+    // Funcție pentru a adăuga un crack pe mașină
     function addCrack() {
       const crackGeom = new THREE.Geometry();
       const p1 = new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, 0);
@@ -135,11 +161,9 @@ document.addEventListener("DOMContentLoaded", async function() {
       cracksGroup.add(crackLine);
     }
     
-    // Funcție de reset pentru piramidă și crack-uri
-    function resetPyramid() {
-      pyramidDamageClicks = 0;
-      material.opacity = 1;
-      material.transparent = false;
+    // Funcție de reset pentru mașină și crack-uri
+    function resetCar() {
+      carDamageClicks = 0;
       cracksGroup.clear();
       exploding = false;
     }
@@ -179,62 +203,15 @@ document.addEventListener("DOMContentLoaded", async function() {
       animateNebula();
     }
     
-    // Funcție pentru explozia piramidei folosind fețele geometriei pentru chunk-uri
-    function explodePyramid() {
-      const geom = new THREE.Geometry().fromBufferGeometry(pyramid.geometry);
-      geom.mergeVertices();
-      const originalPos = pyramid.position.clone();
-      const originalRot = pyramid.rotation.clone();
-      pyramid.visible = false;
-      
-      const pieces = [];
-      geom.faces.forEach(face => {
-        const faceGeom = new THREE.Geometry();
-        faceGeom.vertices.push(
-          geom.vertices[face.a].clone(),
-          geom.vertices[face.b].clone(),
-          geom.vertices[face.c].clone()
-        );
-        faceGeom.faces.push(new THREE.Face3(0, 1, 2));
-        faceGeom.computeFaceNormals();
-        const mesh = new THREE.Mesh(faceGeom, material.clone());
-        mesh.position.copy(originalPos);
-        mesh.rotation.copy(originalRot);
-        pieces.push(mesh);
-        scene.add(mesh);
-      });
-      
-      const explosionStart = Date.now();
-      function animateExplosion() {
-        const elapsed = (Date.now() - explosionStart) / 1000;
-        if (elapsed < 2) {
-          pieces.forEach(piece => {
-            piece.position.add(new THREE.Vector3(
-              (Math.random() - 0.5) * 0.02,
-              (Math.random() - 0.5) * 0.02,
-              (Math.random() - 0.5) * 0.02
-            ));
-            piece.material.opacity = Math.max(0, 1 - elapsed / 2);
-            piece.material.transparent = true;
-          });
-          requestAnimationFrame(animateExplosion);
-        } else {
-          pieces.forEach(piece => scene.remove(piece));
-          pyramid.position.copy(originalPos);
-          pyramid.rotation.copy(originalRot);
-          resetPyramid();
-          pyramid.visible = true;
-        }
-      }
-      animateExplosion();
+    // Funcție pentru explozia mașinii
+    function explodeCar() {
+      // Aceasta ar putea include fragmentarea mașinii în bucăți și animarea exploziei
+      // Detaliile depind de complexitatea pe care o dorești pentru acest efect
     }
     
     function animate() {
       requestAnimationFrame(animate);
-      if (pyramid.visible) {
-        pyramid.rotation.x += 0.005;
-        pyramid.rotation.y += 0.005;
-      }
+      carBody.rotation.y += 0.005;  // Rotește mașina pentru efect vizual
       renderer.render(scene, camera);
     }
     animate();
