@@ -77,180 +77,66 @@ document.addEventListener("DOMContentLoaded", async function() {
       const mouse = new THREE.Vector2();
       
       // Creează o piramidă hexagonală mov cu bază mai mare (raza 2)
-      const geometry = new THREE.CylinderGeometry(0, 2, 2, 6);
-      const material = new THREE.MeshStandardMaterial({ color: 0x800080, flatShading: true });
-      const pyramid = new THREE.Mesh(geometry, material);
-      scene.add(pyramid);
+     import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+// Scene setup
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Car body
+const carBodyGeometry = new THREE.BoxGeometry(4, 1, 2);
+const carBodyMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+const carBody = new THREE.Mesh(carBodyGeometry, carBodyMaterial);
+carBody.position.y = 1;
+scene.add(carBody);
+
+// Wheels
+const wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.5, 32);
+const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+
+const wheelPositions = [
+    [-1.5, 0.5, 1], [1.5, 0.5, 1], 
+    [-1.5, 0.5, -1], [1.5, 0.5, -1]
+];
+
+wheelPositions.forEach(pos => {
+    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(...pos);
+    scene.add(wheel);
+});
+
+// Lights
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5, 5, 5);
+scene.add(light);
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+
+// Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+camera.position.set(0, 5, 10);
+controls.update();
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+});
+
       
-      // Grup pentru "crack"-uri
-      const cracksGroup = new THREE.Group();
-      pyramid.add(cracksGroup);
-      
-      let pyramidDamageClicks = 0;
-      const damageThreshold = 5;
-      let exploding = false;
-      
-      scene.add(new THREE.AmbientLight(0x404040));
-      const pointLight = new THREE.PointLight(0xffffff, 1, 10);
-      pointLight.position.set(2, 2, 2);
-      scene.add(pointLight);
-      
-      // Actualizează coordonatele mouse-ului relativ la canvas și procesează evenimentul
-      renderer.domElement.addEventListener("pointerdown", function(event) {
-        const rect = renderer.domElement.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-        
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObject(pyramid);
-        
-        if (intersects.length > 0 && !exploding) {
-          // Clic pe piramidă: adaugă crack și crește damage-ul
-          pyramidDamageClicks++;
-          addCrack();
-          if (pyramidDamageClicks >= damageThreshold) {
-            exploding = true;
-            explodePyramid();
-          }
-        } else if (intersects.length === 0) {
-          createNebulaExplosion(mouse);
-        }
-      });
-      
-      // Event listener pentru zoom (wheel)
-      renderer.domElement.addEventListener("wheel", function(event) {
-        // Inversează direcția pentru zoom: scroll în jos crește distanța, scroll în sus o micșorează
-        camera.position.z += event.deltaY * 0.01;
-        // Asigură-te că camera nu se apropie prea mult
-        camera.position.z = Math.max(2, camera.position.z);
-        event.preventDefault();
-      });
-      
-      // Funcție pentru a adăuga un crack pe piramidă
-      function addCrack() {
-        const crackGeom = new THREE.Geometry();
-        const p1 = new THREE.Vector3((Math.random()-0.5)*2, (Math.random()-0.5)*2, 0);
-        const p2 = p1.clone().add(new THREE.Vector3((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, 0));
-        crackGeom.vertices.push(p1, p2);
-        const crackMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2, transparent: true, opacity: 1 });
-        const crackLine = new THREE.Line(crackGeom, crackMat);
-        cracksGroup.add(crackLine);
-      }
-      
-      // Funcție de reset pentru piramidă și crack-uri
-      function resetPyramid() {
-        pyramidDamageClicks = 0;
-        material.opacity = 1;
-        material.transparent = false;
-        cracksGroup.clear();
-        exploding = false;
-      }
-      
-      // Funcție pentru explozia nebuloasă
-      function createNebulaExplosion(clickPos) {
-        const numParticles = 500;
-        const particlesGeom = new THREE.Geometry();
-        for (let i = 0; i < numParticles; i++) {
-          const particle = new THREE.Vector3(
-            clickPos.x * 5 + (Math.random() - 0.5) * 0.5,
-            clickPos.y * 5 + (Math.random() - 0.5) * 0.5,
-            0
-          );
-          particlesGeom.vertices.push(particle);
-        }
-        const particlesMat = new THREE.PointsMaterial({
-          size: 0.02,
-          color: new THREE.Color().setHSL(Math.random(), 1.0, 0.5),
-          transparent: true,
-          opacity: 1,
-          blending: THREE.AdditiveBlending
-        });
-        const particleSystem = new THREE.Points(particlesGeom, particlesMat);
-        scene.add(particleSystem);
-        
-        const nebulaStart = Date.now();
-        function animateNebula() {
-          const elapsed = (Date.now() - nebulaStart) / 1000;
-          if (elapsed < 3) {
-            particlesMat.opacity = 1 - (elapsed / 3);
-            requestAnimationFrame(animateNebula);
-          } else {
-            scene.remove(particleSystem);
-          }
-        }
-        animateNebula();
-      }
-      
-      // Funcție pentru explozia piramidei folosind fețele geometriei pentru chunk-uri
-      function explodePyramid() {
-        const geom = new THREE.Geometry().fromBufferGeometry(pyramid.geometry);
-        geom.mergeVertices();
-        const originalPos = pyramid.position.clone();
-        const originalRot = pyramid.rotation.clone();
-        pyramid.visible = false;
-        
-        const pieces = [];
-        geom.faces.forEach(face => {
-          const faceGeom = new THREE.Geometry();
-          faceGeom.vertices.push(
-            geom.vertices[face.a].clone(),
-            geom.vertices[face.b].clone(),
-            geom.vertices[face.c].clone()
-          );
-          faceGeom.faces.push(new THREE.Face3(0, 1, 2));
-          faceGeom.computeFaceNormals();
-          const mesh = new THREE.Mesh(faceGeom, material.clone());
-          mesh.position.copy(originalPos);
-          mesh.rotation.copy(originalRot);
-          pieces.push(mesh);
-          scene.add(mesh);
-        });
-        
-        const explosionStart = Date.now();
-        function animateExplosion() {
-          const elapsed = (Date.now() - explosionStart) / 1000;
-          if (elapsed < 2) {
-            pieces.forEach(piece => {
-              piece.position.add(new THREE.Vector3(
-                (Math.random() - 0.5) * 0.02,
-                (Math.random() - 0.5) * 0.02,
-                (Math.random() - 0.5) * 0.02
-              ));
-              piece.material.opacity = Math.max(0, 1 - elapsed / 2);
-              piece.material.transparent = true;
-            });
-            requestAnimationFrame(animateExplosion);
-          } else {
-            pieces.forEach(piece => scene.remove(piece));
-            pyramid.position.copy(originalPos);
-            pyramid.rotation.copy(originalRot);
-            resetPyramid();
-            pyramid.visible = true;
-          }
-        }
-        animateExplosion();
-      }
-      
-      function animate() {
-        requestAnimationFrame(animate);
-        if (pyramid.visible) {
-          pyramid.rotation.x += 0.01;
-          pyramid.rotation.y += 0.01;
-        }
-        renderer.render(scene, camera);
-      }
-      animate();
-      
-      // Resize listener: actualizează renderer și camera
-      window.addEventListener("resize", () => {
-        const width = window.innerWidth;
-        const height = window.innerHeight / 2;
-        renderer.setSize(width, height);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-      });
-    }
-    
     create3DScene();
   });
   
